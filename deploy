@@ -1,0 +1,182 @@
+#!/bin/bash
+
+#
+# functions
+
+# sync to localhost
+function sync_local {
+
+    # some files we always exclude
+    static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea"
+
+    # check if we need to add .gitignore file
+    if [[ -f .gitignore ]]
+    then
+        exclude="--exclude-from=.gitignore "
+    else
+        exclude=""
+    fi
+
+    # Deploy
+    echo "Deploying locally.."
+    rsync -avz --delete ${exclude} ${relative} ${static_exclude} . ${path}
+
+    # Cleanup
+    cleanup
+}
+
+# sync to remote host
+function sync_remote {
+
+    # some files we always exclude
+    static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea"
+
+    exclude=""
+    # check if we need to add .gitignore file
+    if [[ -f .gitignore ]]
+    then
+        exclude="--exclude-from=.gitignore "
+    fi
+
+    # Deploy
+    echo "Deploying to remote host using rsync .."
+    rsync -avz --delete ${exclude} ${relative} ${static_exclude} . ${user}@${host}:${path}
+
+    # Cleanup
+    cleanup
+}
+
+# sync to s3
+function sync_s3 {
+
+    # some files we always exclude
+    static_exclude="--exclude=.git/* --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea/*"
+
+    dynamic_exclude=""
+    # read gitignore file and prepare parameters
+    if [[ -f .gitignore ]]
+    then
+        while IFS='' read -r line || [[ -n "$line" ]]; do
+        dynamic_exclude="${dynamic_exclude} --exclude=${line}"
+        done < .gitignore
+    fi
+
+    # Deploy
+    echo "Deploying to s3 bucket using aws s3 sync .."
+    aws s3 sync . ${path} --delete ${dynamic_exclude} ${static_exclude}
+
+    # Check if we need to invalidate a CloudFront distribution
+    if [[ -n "${cdn+set}" ]]
+    then
+        echo "Invalidating CloudFront distribution"
+        aws cloudfront create-invalidation --distribution-id ${cdn} --paths '/*' > /dev/null
+    fi
+
+    # Cleanup
+    cleanup
+}
+
+# cleanup
+function cleanup {
+    if [[ -n "${dir+set}" ]]
+    then
+        popd > /dev/null
+    fi
+    echo "All Done."
+}
+
+# check if config file is available
+function check_config_file {
+    echo "Reading configuration .."
+    if [[ ! -f .deploy ]]
+    then
+        echo "Error: Configuration file not found."
+        exit 1
+    fi
+}
+
+# read config values
+function read_config {
+    delimiter="="
+    while IFS='' read -r line || [[ -n "$line" ]]; do
+        key=$(echo "$line" | cut -d ${delimiter} -f 1 | xargs)
+        value=$(echo "$line" | cut -d ${delimiter} -f 2 | xargs)
+        case ${key} in
+            "type" )
+                type=${value}
+                ;;
+            "path" )
+                path=${value}
+                ;;
+            "user" )
+                user=${value}
+                ;;
+            "host" )
+                host=${value}
+                ;;
+            "cdn" )
+                cdn=${value}
+                ;;
+            esac
+    done < .deploy
+}
+
+# 
+# main
+
+# check if directory argument is given
+if [[ "$#" -eq 1 ]]
+then
+    if [[ -d "$1" ]]  # check if directory is valid
+    then
+        pushd . > /dev/null
+        dir=$1
+        cd $1
+    else
+        echo "Error: Invalid directory provided."
+        exit 1
+    fi
+fi
+
+# check if we have config file
+check_config_file
+
+# set default configuration
+type="local"
+
+# get configuration
+read_config
+
+# check if path is set
+if [[ -z "${path+x}" ]]
+then
+    echo "Error: Deployment path not set."
+    exit 1
+fi
+
+# check if we have user and host for remote deployment
+if [[ "${type}" = "remote-rsync" ]]
+then
+    if [[ -z "${host+x}" ]] || [[ -z "${user+x}" ]]
+    then
+        echo "Error: Remote host or user not set."
+        exit 1
+    fi
+fi
+
+# check how we continue
+case ${type} in
+    "local" )
+        sync_local
+        ;;
+    "remote-rsync" )
+        sync_remote
+        ;;
+    "remote-s3" )
+        sync_s3
+        ;;
+    * )
+        echo "Error: Deployment type configuration invalid."
+        exit 1
+        ;;
+esac
