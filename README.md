@@ -66,6 +66,10 @@ The `user` parameter defines the deployment user. It must be set if the type par
 
 The `cdn` parameter is optional and, if set, must contain an AWS CloudFront cdn distribution id. If it is set and if the type parameter is set to `remote-s3`, `deploy` will attempt to invalidate the distribution after uploading files.
 
+### source
+
+The `source` parameter is optional. If set, it must point to a relative subdirectory inside the project path which will then be used as deployment source, instead of the project's root directory. 
+
 ## Dependencies
 
 If deployment to AWS S3 is to be used, the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/awscli-install-linux.html) must be present on the system. 

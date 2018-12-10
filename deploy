@@ -19,7 +19,7 @@ function sync_local {
 
     # Deploy
     echo "Deploying locally.."
-    rsync -avz --delete ${exclude} ${relative} ${static_exclude} . ${path}
+    rsync -avz --delete ${exclude} ${relative} ${static_exclude} ${source_path} ${path}
 
     # Cleanup
     cleanup
@@ -40,7 +40,7 @@ function sync_remote {
 
     # Deploy
     echo "Deploying to remote host using rsync .."
-    rsync -avz --delete ${exclude} ${relative} ${static_exclude} . ${user}@${host}:${path}
+    rsync -avz --delete ${exclude} ${relative} ${static_exclude} ${source_path} ${user}@${host}:${path}
 
     # Cleanup
     cleanup
@@ -63,7 +63,7 @@ function sync_s3 {
 
     # Deploy
     echo "Deploying to s3 bucket using aws s3 sync .."
-    aws s3 sync . ${path} --delete ${dynamic_exclude} ${static_exclude}
+    aws s3 sync ${source_path} ${path} --delete ${dynamic_exclude} ${static_exclude}
 
     # Check if we need to invalidate a CloudFront distribution
     if [[ -n "${cdn+set}" ]]
@@ -117,6 +117,9 @@ function read_config {
             "cdn" )
                 cdn=${value}
                 ;;
+            "source" )
+                source_path=${value}
+                ;;
             esac
     done < .deploy
 }
@@ -143,6 +146,7 @@ check_config_file
 
 # set default configuration
 type="local"
+source_path="."
 
 # get configuration
 read_config
@@ -151,6 +155,13 @@ read_config
 if [[ -z "${path+x}" ]]
 then
     echo "Error: Deployment path not set."
+    exit 1
+fi
+
+# check if source path is valid
+if [[ ! -d "${source_path}" ]]
+then
+    echo "Error: Invalid source path provided."
     exit 1
 fi
 
