@@ -23,7 +23,7 @@ otherwise type:
 
 Please note that for any directory paths contained in the `.gitignore` file, for local and remote-rsync deployment a directory can be listed by just giving the directory name, while for remote-s3 deployments, a directory must be listed by using the `directory/*` syntax. 
 
-`deploy` will delete files and directories that are present in the deployment path but not in the source directory.
+`deploy` will delete files and directories that are present in the deployment path but not in the source directory. Therefore, the deployment path must owned by the project, and cannot be a shared path that is used by other projects as well.
 
 ## Deployment Methods
 
