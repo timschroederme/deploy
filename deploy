@@ -169,7 +169,6 @@ function read_config {
                 ;;
             esac
     done <<< "$config"
-    exit 0
 }
 
 # 
