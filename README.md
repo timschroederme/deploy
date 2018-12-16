@@ -2,17 +2,9 @@
 
 `deploy` deploys project files on a local or remote host, based on a per-project configuration file.
 
-## Usage
+## General
 
-When you are in a project's root directory, simply type:
-
-    deploy
-
-otherwise type:
-
-    deploy <directory>
-
-`deploy` will deploy all files and directories of a project, except the following, which will be ignored:
+`deploy` works on a per-project basis. A project is defined as a directory, including all the files and sub-directories it contains. `deploy` will deploy all files and directories of a project, except the following, which will be ignored:
 
 * the `.gitignore` file
 * the `.deploy` file
@@ -24,6 +16,16 @@ otherwise type:
 Please note that for any directory paths contained in the `.gitignore` file, for local and remote-rsync deployment a directory can be listed by just giving the directory name, while for remote-s3 deployments, a directory must be listed by using the `directory/*` syntax. 
 
 `deploy` will delete files and directories that are present in the deployment path but not in the source directory. Therefore, the deployment path must owned by the project, and cannot be a shared path that is used by other projects as well.
+
+## Usage
+
+The syntax to use deploy is:
+
+    deploy [--config=<config>] [<directory>]
+
+The `--config` parameter can be used to instruct `deploy` which of multiple deployment configurations that are defined in the configuration file is to be used. It is optional if only one deployment configuration has been defined there, but it is mandatory if more than one deployment configuration has been defined there.
+
+The `directory` paramater is optional and instructs `deploy` to switch to the provided directory before starting to deploy.
 
 ## Deployment Methods
 
@@ -37,11 +39,20 @@ For remote deployments, `deploy` will attempt to use ssh or AWS credentials of t
 
 ## Configuration
 
-Configuration is defined in configuration file `.deploy` that must be in a project's root directory. The following rules apply for the format of the configuration file: 
+Configuration is defined in configuration file `.deploy` that must be in a project's root directory. 
+
+This configuration file can have multiple sections to define multiple deployment configurations. If multiple sections are present, each section must begin with one line that has the name of the deployment configuration in square brackets. For example:
+
+    [develop]
+    type=..
+
+If the configuration file has only one section, this line containing the name of the deployment configuration can be skipped.
+
+The following rules apply for the format for each section of the configuration file: 
 
 * Each configuration parameter must be in its own line
 * format is `key=value`
-* line order is not relevant
+* line order inside a section is not relevant
 * whitespace doesn't matter
 
 Valid configuration parameters are the following:

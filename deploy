@@ -97,6 +97,53 @@ function check_config_file {
 
 # read config values
 function read_config {
+
+    # read config file into variable, in case we don't have sections
+    config=$(<.deploy)
+
+    # check how many sections we have in config file
+    cnt=$(grep -o "\[" < .deploy | wc -l)
+
+    # check if we have a config parameter set
+    if [[ $# -ne 0 ]]  # yes
+    then
+        if [[ ${cnt} == 0 ]]  # a config parameter has been given but config file has no sections
+        then
+            echo "Error: No sections in configuration file."
+            exit 1
+        fi
+
+        # get the relevant section from the config file
+        section_start=$(awk '/\['$1']/{ print NR }' .deploy)
+        if [[ ${section_start} > 0 ]]
+        then
+            section_end=0
+            for next in $(awk '/\[/{ print NR }' .deploy)
+            do
+                if [[ ${section_end} == 0 && ${next} > ${section_start} ]]
+                then
+                    section_end=$((next - 1))
+                fi
+            done
+            if [[ ${section_end} == 0 ]]
+            then
+                config=$(sed -n ${section_start}',$p' < .deploy)
+            else
+                config=$(sed -n ${section_start}','${section_end}'p' < .deploy)
+            fi
+        else  # the provided config isn't present in the config file
+            echo "Error: Provided configuration not found in configuration file."
+            exit 1
+        fi
+    else  # no config parameter has been provided
+        if [[ ${cnt} > 1 ]]  # we have multiple sections in the config file
+        then
+            echo "Error: No deployment configuration specified, though multiple present in configuration file."
+            exit 1
+        fi
+    fi
+
+    # read configuration
     delimiter="="
     while IFS='' read -r line || [[ -n "$line" ]]; do
         key=$(echo "$line" | cut -d ${delimiter} -f 1 | xargs)
@@ -121,24 +168,33 @@ function read_config {
                 source_path=${value}
                 ;;
             esac
-    done < .deploy
+    done <<< "$config"
+    exit 0
 }
 
 # 
 # main
 
-# check if directory argument is given
-if [[ "$#" -eq 1 ]]
+# check if we have any argument
+if [[ "$#" -ne 0 ]]
 then
-    if [[ -d "$1" ]]  # check if directory is valid
-    then
-        pushd . > /dev/null
-        dir=$1
-        cd $1
-    else
-        echo "Error: Invalid directory provided."
-        exit 1
-    fi
+    for var in "$@"
+    do
+        if [[ ${var} == --config=* ]]
+        then
+            config=$(cut -d "=" -f 2 <<< "$var")
+        else
+            if [[ -d ${var} ]]  # check if directory is valid
+            then
+                pushd . > /dev/null
+                dir=${var}
+                cd ${var}
+            else
+                echo "Error: Invalid directory provided."
+                exit 1
+            fi
+        fi
+    done
 fi
 
 # check if we have config file
@@ -149,7 +205,7 @@ type="local"
 source_path="."
 
 # get configuration
-read_config
+read_config ${config}
 
 # check if path is set
 if [[ -z "${path+x}" ]]
