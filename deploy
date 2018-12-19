@@ -6,6 +6,14 @@
 # sync to localhost
 function sync_local {
 
+    # check if we skip delete
+    echo ${del_on_sync}
+    del="--delete"
+    if [[ "${del_on_sync}" = false || "${del_on_sync}" = no ]] ;
+    then
+        del=""
+    fi
+
     # some files we always exclude
     static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea"
 
@@ -19,7 +27,7 @@ function sync_local {
 
     # Deploy
     echo "Deploying locally.."
-    rsync -avz --delete ${exclude} ${relative} ${static_exclude} ${source_path} ${path}
+    rsync -avz ${del} ${exclude} ${relative} ${static_exclude} ${source_path} ${path}
 
     # Cleanup
     cleanup
@@ -27,6 +35,14 @@ function sync_local {
 
 # sync to remote host
 function sync_remote {
+
+    # check if we skip delete
+    echo ${del_on_sync}
+    del="--delete"
+    if [[ "${del_on_sync}" = false || "${del_on_sync}" = no ]] ;
+    then
+        del=""
+    fi
 
     # some files we always exclude
     static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea"
@@ -40,7 +56,7 @@ function sync_remote {
 
     # Deploy
     echo "Deploying to remote host using rsync .."
-    rsync -avz --delete ${exclude} ${relative} ${static_exclude} ${source_path} ${user}@${host}:${path}
+    rsync -avz ${del} ${exclude} ${relative} ${static_exclude} ${source_path} ${user}@${host}:${path}
 
     # Cleanup
     cleanup
@@ -48,6 +64,14 @@ function sync_remote {
 
 # sync to s3
 function sync_s3 {
+
+    # check if we skip delete
+    echo ${del_on_sync}
+    del="--delete"
+    if [[ "${del_on_sync}" = false || "${del_on_sync}" = no ]] ;
+    then
+        del=""
+    fi
 
     # some files we always exclude
     static_exclude="--exclude=.git/* --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea/*"
@@ -63,7 +87,7 @@ function sync_s3 {
 
     # Deploy
     echo "Deploying to s3 bucket using aws s3 sync .."
-    aws s3 sync ${source_path} ${path} --delete ${dynamic_exclude} ${static_exclude}
+    aws s3 sync ${source_path} ${path} ${del} ${dynamic_exclude} ${static_exclude}
 
     # Check if we need to invalidate a CloudFront distribution
     if [[ -n "${cdn+set}" ]]
@@ -167,12 +191,21 @@ function read_config {
             "source" )
                 source_path=${value}
                 ;;
+            "delete" )
+                del_on_sync=${value}
+                ;;
             esac
     done <<< "$config"
 }
 
 # 
 # main
+
+
+# set default configuration
+type="local"
+source_path="."
+del_on_sync=true
 
 # check if we have any argument
 if [[ "$#" -ne 0 ]]
@@ -198,10 +231,6 @@ fi
 
 # check if we have config file
 check_config_file
-
-# set default configuration
-type="local"
-source_path="."
 
 # get configuration
 read_config ${config}

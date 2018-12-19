@@ -15,7 +15,7 @@
 
 Please note that for any directory paths contained in the `.gitignore` file, for local and remote-rsync deployment a directory can be listed by just giving the directory name, while for remote-s3 deployments, a directory must be listed by using the `directory/*` syntax. 
 
-`deploy` will delete files and directories that are present in the deployment path but not in the source directory. Therefore, the deployment path must owned by the project, and cannot be a shared path that is used by other projects as well.
+Unless the `delete` parameter is set no `no` or `false` (see below), `deploy` will delete files and directories that are present in the deployment path but not in the source directory. Therefore, the deployment path must owned by the project, and cannot be a shared path that is used by other projects as well.
 
 ## Usage
 
@@ -80,6 +80,10 @@ The `cdn` parameter is optional and, if set, must contain an AWS CloudFront cdn 
 ### source
 
 The `source` parameter is optional. If set, it must point to a relative subdirectory inside the project path which will then be used as deployment source, instead of the project's root directory. 
+
+### delete
+
+The `delete` parameter is optional. If it is provided and set to `no` or `false`, `deploy` will not delete any files or directories that are present in the deployment path but not in the source path. If it is not provided, `deploy` will delete such files and directories (see above).
 
 ## Dependencies
 
