@@ -23,7 +23,11 @@ The syntax to use deploy is:
 
     deploy [--config=<config>] [<directory>]
 
-The `--config` parameter can be used to instruct `deploy` which of multiple deployment configurations that are defined in the configuration file is to be used. It is optional if only one deployment configuration has been defined there, but it is mandatory if more than one deployment configuration has been defined there.
+The `--config` parameter can be used to instruct `deploy` which of multiple deployment configurations that are defined in the configuration file is to be used. It is optional if only one deployment configuration has been defined there, but it is mandatory if more than one deployment configuration has been defined there. If provided, `<config>` must be the name of a configuration that is present in the configuration file. 
+
+For example, if the configuration file has a configuration section that begins with `[develop]`, the syntax is:
+
+    deploy --config=develop [<directory>]
 
 The `directory` paramater is optional and instructs `deploy` to switch to the provided directory before starting to deploy.
 
@@ -39,7 +43,7 @@ For remote deployments, `deploy` will attempt to use ssh or AWS credentials of t
 
 ## Configuration
 
-Configuration is defined in configuration file `.deploy` that must be in a project's root directory. 
+Configurations are defined in a `.deploy` configuration file that must be in a project's root directory. 
 
 This configuration file can have multiple sections to define multiple deployment configurations. If multiple sections are present, each section must begin with one line that has the name of the deployment configuration in square brackets. For example:
 
