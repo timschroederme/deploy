@@ -35,7 +35,7 @@ The `directory` paramater is optional and instructs `deploy` to switch to the pr
 
 `deploy` supports deploying to the following targets:
 
-* local, where `cp` will be used;
+* local, where `rsync` will be used;
 * remote, where `rsync` will be used;
 * remote, where `aws s3 sync` will be used and optionally a CloudFront distribution can be invalidated after upload.
 
