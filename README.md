@@ -89,6 +89,10 @@ The `source` parameter is optional. If set, it must point to a relative subdirec
 
 The `delete` parameter is optional. If it is provided and set to `no` or `false`, `deploy` will not delete any files or directories that are present in the deployment path but not in the source path. If it is not provided, `deploy` will delete such files and directories (see above).
 
+### apache-conf
+
+The `apache-conf`parameter is optional and can only be used when local deployment is used. The parameter shall denote a apache configuration file name (including its relative path, if necessary). If given, this configuration file will be deployed to `/etc/apache2/sites-available` and the site will be enabled after deployment by running `sudo a2ensite <conf> && sudo systemctl restart apache2`.
+
 ## Dependencies
 
 If deployment to AWS S3 is to be used, the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/awscli-install-linux.html) must be present on the system. 

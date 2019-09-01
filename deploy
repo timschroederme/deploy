@@ -16,8 +16,15 @@ function sync_local {
     # some files we always exclude
     static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=.deploy --exclude=.idea"
 
+    # check if we need to add apache config file to list of excluded files
+
+    if [[ ! -z "$apache_conf" ]] ;
+    then
+        static_exclude+=" --exclude=${apache_conf}"
+    fi
+
     # check if we need to add .gitignore file
-    if [[ -f .gitignore ]]
+    if [[ -f .gitignore ]] ;
     then
         exclude="--exclude-from=.gitignore "
     else
@@ -27,6 +34,16 @@ function sync_local {
     # Deploy
     echo "Deploying locally.."
     rsync -avz ${del} ${exclude} ${relative} ${static_exclude} ${source_path} ${path}
+
+    # Deploy apache config (optional)
+    if [[ ! -z "$apache_conf" ]] ;
+    then
+        echo "Deploying apache config.."
+        sudo cp ${apache_conf} /etc/apache2/sites-available
+        sudo a2ensite ${apache_conf} > /dev/null
+        sudo systemctl reload apache2
+    fi
+
 
     # Cleanup
     cleanup
@@ -191,6 +208,9 @@ function read_config {
             "delete" )
                 del_on_sync=${value}
                 ;;
+            "apache-conf" )
+                apache_conf=${value}
+                ;;
             esac
     done <<< "$config"
 }
@@ -203,6 +223,7 @@ function read_config {
 type="local"
 source_path="."
 del_on_sync=true
+apache_conf=""
 
 # check if we have any argument
 if [[ "$#" -ne 0 ]]
