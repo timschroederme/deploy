@@ -71,7 +71,7 @@ function sync_remote {
 
     # Deploy
     echo "Deploying to remote host using rsync .."
-    rsync -avz ${del} ${exclude} ${relative} ${static_exclude} ${source_path} ${user}@${host}:${path}
+    rsync -avzc ${del} ${exclude} ${relative} ${static_exclude} ${source_path} ${user}@${host}:${path}
 
     # Cleanup
     cleanup
