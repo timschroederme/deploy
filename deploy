@@ -60,7 +60,7 @@ function sync_remote {
     fi
 
     # some files we always exclude
-    static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=LICENSE.md --exclude=.deploy --exclude=.idea"
+    static_exclude="--exclude=.git --exclude=.gitignore --exclude=README.md --exclude=LICENSE.md --exclude=.deploy --exclude=.idea --exclude=.DS_Store"
 
     exclude=""
     # check if we need to add .gitignore file

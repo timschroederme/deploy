@@ -10,6 +10,7 @@
 * the `.deploy` file
 * the `README.md` file
 * the `LICENSE.md` file
+* any `.DS_Store` file
 * the `.idea` directory
 * the `.git` directory
 * any files and directories contained in the `.gitignore` file
